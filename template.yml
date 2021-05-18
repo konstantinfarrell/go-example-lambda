@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Lambda that takes in kinesis records and shovels them into a DB
+Resources:
+  function:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main
+      Runtime: go1.x
+      CodeUri: lambda
+      Description: Use RDS to populate the DB with file data
+      Timeout: 5
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonKinesisReadOnlyAccess
+        - AmazonRDSDataFullAccess
+      Tracing: Active
