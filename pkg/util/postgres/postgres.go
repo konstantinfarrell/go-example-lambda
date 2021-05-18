@@ -26,27 +26,30 @@ func New(conf *config.Config) (*Database, error) {
 	return &Database{ Conn: db }, nil
 }
 
-func connStringFromConfig(conf *config.Config) string {
-	// postgresql://user:password@url:port/dbname
-	base := "postgresql://%s:%s@%s:%s/%s"
+func connOptionsFromConfig(conf *config.Configuration) *pg.Options {
 	c := conf.DB
-	return fmt.Sprintf(base, c.User, c.Pass, c.Addr, strconv.Itoa(c.Port), c.Name)
+	port := strconv.Itoa(c.Port)
+	addr := fmt.Sprintf("%s:%s", c.Addr, port)
+	return &pg.Options{
+		Addr: addr,
+		User: c.User,
+		Password: c.Pass,
+		Database: c.Name,
+	}
 }
 
-func (d *Database) Call(sp string, args ...interface{}) (*[]interface{}, error){
+func (d *Database) Call(hasReturn bool, files *[]golx.File, sp string, args ...interface{}) (*[]gox.File, error){
 	log.Printf("Call sp %s called", sp)
-	query := formatCall(sp, args)
-	result, err := d.Conn.Exec(query)
+	query := formatCall(hasReturn, sp, args)
+	_, err := d.Conn.Query(files, query)
 	if err != nil {
 		log.Printf("Error calling sp: %s", err)
 		return nil, err
 	}
-	var results []interface{}
-
-	return &results, nil
+	return files, nil
 }
 
-func formatCall(sp string, args ...interface{}) (string) {
+func formatCall(hasReturn bool, sp string, args ...interface{}) (string) {
 	var query, q_args string
 
 	for _, arg := range args {
@@ -56,6 +59,13 @@ func formatCall(sp string, args ...interface{}) (string) {
 			q_args = fmt.Sprintf("%v, %v", q_args, arg)
 		}
 	}
-	query = fmt.Sprintf("call %s(%s);", sp, q_args)
+	if q_args == "[]" {
+		q_args = ""
+	}
+	if hasReturn {
+		query = fmt.Sprintf("select * from %s(%s)", sp, q_args)
+	} else {
+		query = fmt.Sprintf("call %s(%s);", sp, q_args)
+	}
 	return query
 }
