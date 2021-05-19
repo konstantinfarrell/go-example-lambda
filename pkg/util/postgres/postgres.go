@@ -8,6 +8,7 @@ import (
 	"github.com/go-pg/pg/v9"
 	_ "github.com/lib/pq"
 
+	"github.com/konstantinfarrell/go-example-lambda"
 	"github.com/konstantinfarrell/go-example-lambda/pkg/util/config"
 )
 
@@ -16,17 +17,12 @@ type Database struct {
 }
 
 func New(conf *config.Config) (*Database, error) {
-	connStr := connStringFromConfig(conf)
-	u, err := pg.ParseURL(connStr)
-	if err != nil {
-		return nil, err
-	}
-
-	db := pg.Connect(u)
+	options := connOptionsFromConfig(conf)
+	db := pg.Connect(options)
 	return &Database{ Conn: db }, nil
 }
 
-func connOptionsFromConfig(conf *config.Configuration) *pg.Options {
+func connOptionsFromConfig(conf *config.Config) *pg.Options {
 	c := conf.DB
 	port := strconv.Itoa(c.Port)
 	addr := fmt.Sprintf("%s:%s", c.Addr, port)
@@ -38,7 +34,7 @@ func connOptionsFromConfig(conf *config.Configuration) *pg.Options {
 	}
 }
 
-func (d *Database) Call(hasReturn bool, files *[]golx.File, sp string, args ...interface{}) (*[]gox.File, error){
+func (d *Database) Call(hasReturn bool, files *[]golx.File, sp string, args ...interface{}) (*[]golx.File, error){
 	log.Printf("Call sp %s called", sp)
 	query := formatCall(hasReturn, sp, args)
 	_, err := d.Conn.Query(files, query)
