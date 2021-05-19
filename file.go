@@ -2,6 +2,7 @@ package golx
 
 import (
 	"encoding/json"
+	"time"
 )
 
 type File struct {

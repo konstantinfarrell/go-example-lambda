@@ -9,7 +9,7 @@ import (
 func CreateFile(d *postgres.Database, f *golx.File) (*golx.File, error) {
 	spname := "create_file"
 	var files []golx.File
-	_, err := d.Call(false, &files, spname, f.Filename, f.Path, f.Permissions, f.Created, f.Modified, f.FileId, f.Data, f.Received)
+	_, err := d.Call(false, &files, spname, f.FileId, f.Filename, f.Path, f.Permissions, f.Created, f.Modified, f.Data, f.Received)
 	if err != nil {
 		log.Printf("Error while calling create_file: %s", err)
 		return nil, err
